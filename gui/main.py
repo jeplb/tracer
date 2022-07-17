@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from ttkwidgets.autocomplete import AutocompleteCombobox
 import csv
+from datetime import date
 
 
 def probe_trunct(seq, memo={}):
@@ -27,6 +28,18 @@ def callback():
         idt_output = probe_id + '\t' + probe_seq + '\t' + '250nm' + '\n'
         output.insert('1.0', idt_output)
 
+def export():
+    if len(output.get('1.0', END)) == 1: # Take into account that there is a '\n' already by default
+        messagebox.showerror(title='Missing values', message='No barcode ID and marker were added to the list.')
+    else:
+        today = date.today()
+        d = today.strftime('%Y_%m_%d')
+
+        filename = d + '_' + 'IDT_export.csv'
+
+        with open(filename, 'w') as f:
+            f.write(output.get('1.0', END))
+
 # Import CSV list
 barcode_id = []
 barcode_seq = []
@@ -44,19 +57,14 @@ window = Tk()
 # Add window title
 window.title('TRACER barcode selection')
 
-# GUI label
-# ttk.Label(window, text='TRACER barcode selection',font=('Arial', 20)).grid(row=0, column=1)
-
 # Define GUI geometry
-window.geometry('470x400')
+window.geometry('520x400')
 
 # Create barcode label
 ttk.Label(window, text='Select barcode ID').grid(row=15, column=0, padx=20, pady=10)
 
 # Create barcode combobox menu
-n = StringVar()
-barcode_sel = ttk.Combobox(window, width=30, textvariable=n)
-barcode_sel['values'] = barcode_id
+barcode_sel = AutocompleteCombobox(window, width=30, completevalues=barcode_id)
 barcode_sel.grid(row=15, column=1)
 
 # Create marker label
@@ -75,7 +83,7 @@ marker_prefix = ('fl_',
                  'af_',
                  'ty_',
                  't6_',
-                 'ty_')
+                 't7_')
 
 marker_seq = ('AGACGAGGCCCTAGA',
               'GCATTGCGTTCAACT',
@@ -90,10 +98,11 @@ marker_sel.grid(row=20, column=1)
 
 # Create button
 ttk.Button(window, text='Add to list', command=callback).grid(row=30, column=0, padx=20, pady=10)
+ttk.Button(window, text='Export as XLSX file', command=export).grid(row=40, column=0, padx=20, pady=10)
 
 # Create textframe output
 output = Text(window)
-output.place(x=10, y=150, height=200, width=440)
+output.place(x=10, y=170, height=200, width=500)
 
 # Create GUI
 window.mainloop()
