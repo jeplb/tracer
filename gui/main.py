@@ -98,7 +98,7 @@ marker_sel.grid(row=20, column=1)
 
 # Create button
 ttk.Button(window, text='Add to list', command=callback).grid(row=30, column=0, padx=20, pady=10)
-ttk.Button(window, text='Export as XLSX file', command=export).grid(row=40, column=0, padx=20, pady=10)
+ttk.Button(window, text='Export to file', command=export).grid(row=40, column=0, padx=20, pady=10)
 
 # Create textframe output
 output = Text(window)
