@@ -4,8 +4,6 @@ from tkinter import messagebox
 from ttkwidgets.autocomplete import AutocompleteCombobox
 import csv
 from datetime import date
-
-
 def probe_trunct(seq, memo={}):
     complements = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G', '*': '*', 'N': 'N'}
     if seq not in memo:
