@@ -373,9 +373,3 @@ Tested on modern browsers (Chrome, Firefox, Safari, Edge). No external dependenc
 ## License
 
 See repository license file.
-
-## Citation
-
-If you use these tools in your research, please cite:
-
-> Berleant et al. (2025). "TRACER enables tracking and retrieval of samples in large biobanks using DNA barcodes." medRxiv. https://doi.org/10.1101/2024.04.12.24305660
