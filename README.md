@@ -2,7 +2,7 @@
 
 Web-based tools for designing fluorescent probes and planning FACS sorting queries for pooled biobank sample retrieval using the TRACER system.
 
-**Reference:** [Berleant et al. (2025)](https://doi.org/10.1101/2024.04.12.24305660) - "TRACER enables tracking and retrieval of samples in large biobanks using DNA barcodes"
+**Reference:** [Berleant et al. (2025)](https://doi.org/10.1101/2024.04.12.24305660) - "Enabling global-scale nucleic acid repositories through versatile, scalable biochemical selection from room-temperature archives"
 
 ---
 
