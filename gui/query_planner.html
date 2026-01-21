@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Planner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            font-size: 22px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #666;
+            margin: 0 0 25px 0;
+        }
+        .subtitle a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .subtitle a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .form-row label {
+            width: 160px;
+            font-size: 13px;
+            color: #555;
+            flex-shrink: 0;
+        }
+        input, select {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0066cc;
+        }
+        select {
+            min-width: 120px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e8e8e8;
+        }
+        button.primary {
+            background: #0066cc;
+            color: #fff;
+            border-color: #0066cc;
+        }
+        button.primary:hover {
+            background: #0055aa;
+        }
+        button.danger {
+            color: #c62828;
+            border-color: #c62828;
+        }
+        button.danger:hover {
+            background: #ffebee;
+        }
+        button.small {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .query-builder {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .condition-group {
+            border: 2px solid #90caf9;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #e3f2fd;
+        }
+        .condition-group.or-group {
+            border-color: #ce93d8;
+            background: #f3e5f5;
+        }
+        .condition-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .condition-group-header .logic-label {
+            color: #1565c0;
+            text-transform: uppercase;
+        }
+        .condition-group.or-group .logic-label {
+            color: #7b1fa2;
+        }
+        .condition-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            flex-wrap: wrap;
+        }
+        .condition-row select {
+            font-size: 13px;
+            padding: 6px 10px;
+        }
+        .condition-row .logic-connector {
+            font-weight: 600;
+            color: #666;
+            font-size: 12px;
+            min-width: 40px;
+        }
+        .add-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .query-preview {
+            background: #263238;
+            color: #aed581;
+            font-family: 'Monaco', 'Menlo', monospace;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .query-preview .keyword {
+            color: #4fc3f7;
+        }
+        .query-preview .operator {
+            color: #fff176;
+        }
+        .query-preview .value {
+            color: #f48fb1;
+        }
+        .query-preview .field {
+            color: #aed581;
+        }
+        .sorting-plan {
+            margin-top: 20px;
+        }
+        .round-card {
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .round-header {
+            background: #4caf50;
+            color: #fff;
+            padding: 12px 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .round-header .round-channels {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .round-body {
+            padding: 15px;
+            background: #fff;
+        }
+        .round-query {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .round-probes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .probe-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .probe-chip.positive {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .probe-chip.negative {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .probe-chip .gate {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .gating-strategy {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .gating-strategy-title {
+            font-weight: 600;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .gate-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            padding: 4px 0;
+        }
+        .gate-logic {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .warning {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #e65100;
+        }
+        .success {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #2e7d32;
+        }
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+        .empty-state {
+            padding: 30px;
+            text-align: center;
+            color: #999;
+        }
+        .optimization-note {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 10px 12px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #6d4c00;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .facs-config {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Query Planner</h1>
+    <p class="subtitle">Plan optimized FACS sorting queries. See <a href="https://doi.org/10.1101/2024.04.12.24305660" target="_blank" rel="noopener">Berleant et al. (2025)</a> for details.</p>
+
+    <div class="section">
+        <div class="section-title">FACS configuration</div>
+        <div class="facs-config">
+            <div class="form-row" style="margin-bottom: 0;">
+                <label>Channels per round</label>
+                <select id="maxChannels">
+                    <option value="3">3 channels</option>
+                    <option value="4">4 channels</option>
+                    <option value="5" selected>5 channels</option>
+                    <option value="6">6 channels</option>
+                </select>
+            </div>
+        </div>
+        <div class="help-text">Maximum fluorophore channels available per sorting round.</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Query builder</div>
+        <p class="help-text" style="margin-bottom: 15px;">Build your query using AND/OR logic. Conditions within an OR group are combined with OR. OR groups are combined with AND.</p>
+
+        <div id="queryBuilder">
+            <!-- Query conditions will be rendered here -->
+        </div>
+
+        <div class="add-buttons">
+            <button onclick="addOrGroup()">+ Add OR group</button>
+            <button onclick="loadExampleQuery()">Load example query</button>
+        </div>
+
+        <div class="query-preview" id="queryPreview">
+            <span class="keyword">SELECT</span> samples <span class="keyword">WHERE</span> ...
+        </div>
+
+        <div style="margin-top: 15px;">
+            <button class="primary" onclick="generateSortingPlan()">Generate sorting plan</button>
+            <button onclick="resetQuery()" style="margin-left: 10px;">Reset</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Optimized sorting plan</div>
+        <div id="sortingPlan">
+            <div class="empty-state">Build a query above and click "Generate sorting plan" to see the optimized multi-round sorting strategy.</div>
+        </div>
+    </div>
+
+    <script>
+        // Barcode encoding data from the paper
+        const ENCODING = {
+            bc_age: {
+                label: 'Age',
+                type: 'numeric',
+                digitBarcodes: {
+                    x25: ['bc_age_x25_seq0', 'bc_age_x25_seq1', 'bc_age_x25_seq2', 'bc_age_x25_seq3'],
+                    x5: ['bc_age_x5_seq0', 'bc_age_x5_seq1', 'bc_age_x5_seq2', 'bc_age_x5_seq3', 'bc_age_x5_seq4'],
+                    x1: ['bc_age_x1_seq0', 'bc_age_x1_seq1', 'bc_age_x1_seq2', 'bc_age_x1_seq3', 'bc_age_x1_seq4']
+                },
+                values: {
+                    0: ['bc_age_x25_seq0', 'bc_age_x5_seq0', 'bc_age_x1_seq0'],
+                    3: ['bc_age_x25_seq0', 'bc_age_x5_seq0', 'bc_age_x1_seq3'],
+                    4: ['bc_age_x25_seq0', 'bc_age_x5_seq0', 'bc_age_x1_seq4'],
+                    5: ['bc_age_x25_seq0', 'bc_age_x5_seq1', 'bc_age_x1_seq0'],
+                    6: ['bc_age_x25_seq0', 'bc_age_x5_seq1', 'bc_age_x1_seq1'],
+                    8: ['bc_age_x25_seq0', 'bc_age_x5_seq1', 'bc_age_x1_seq3'],
+                    9: ['bc_age_x25_seq0', 'bc_age_x5_seq1', 'bc_age_x1_seq4'],
+                    10: ['bc_age_x25_seq0', 'bc_age_x5_seq2', 'bc_age_x1_seq0'],
+                    11: ['bc_age_x25_seq0', 'bc_age_x5_seq2', 'bc_age_x1_seq1'],
+                    12: ['bc_age_x25_seq0', 'bc_age_x5_seq2', 'bc_age_x1_seq2'],
+                    14: ['bc_age_x25_seq0', 'bc_age_x5_seq2', 'bc_age_x1_seq4'],
+                    16: ['bc_age_x25_seq0', 'bc_age_x5_seq3', 'bc_age_x1_seq1'],
+                    17: ['bc_age_x25_seq0', 'bc_age_x5_seq3', 'bc_age_x1_seq2'],
+                    18: ['bc_age_x25_seq0', 'bc_age_x5_seq3', 'bc_age_x1_seq3'],
+                    22: ['bc_age_x25_seq0', 'bc_age_x5_seq4', 'bc_age_x1_seq2'],
+                    24: ['bc_age_x25_seq0', 'bc_age_x5_seq4', 'bc_age_x1_seq4'],
+                    25: ['bc_age_x25_seq1', 'bc_age_x5_seq0', 'bc_age_x1_seq0'],
+                    26: ['bc_age_x25_seq1', 'bc_age_x5_seq0', 'bc_age_x1_seq1'],
+                    27: ['bc_age_x25_seq1', 'bc_age_x5_seq0', 'bc_age_x1_seq2'],
+                    28: ['bc_age_x25_seq1', 'bc_age_x5_seq0', 'bc_age_x1_seq3'],
+                    34: ['bc_age_x25_seq1', 'bc_age_x5_seq1', 'bc_age_x1_seq4'],
+                    37: ['bc_age_x25_seq1', 'bc_age_x5_seq2', 'bc_age_x1_seq2'],
+                    38: ['bc_age_x25_seq1', 'bc_age_x5_seq2', 'bc_age_x1_seq3'],
+                    40: ['bc_age_x25_seq1', 'bc_age_x5_seq3', 'bc_age_x1_seq0'],
+                    42: ['bc_age_x25_seq1', 'bc_age_x5_seq3', 'bc_age_x1_seq2'],
+                    43: ['bc_age_x25_seq1', 'bc_age_x5_seq3', 'bc_age_x1_seq3'],
+                    44: ['bc_age_x25_seq1', 'bc_age_x5_seq3', 'bc_age_x1_seq4'],
+                    45: ['bc_age_x25_seq1', 'bc_age_x5_seq4', 'bc_age_x1_seq0'],
+                    47: ['bc_age_x25_seq1', 'bc_age_x5_seq4', 'bc_age_x1_seq2'],
+                    48: ['bc_age_x25_seq1', 'bc_age_x5_seq4', 'bc_age_x1_seq3'],
+                    49: ['bc_age_x25_seq1', 'bc_age_x5_seq4', 'bc_age_x1_seq4'],
+                    50: ['bc_age_x25_seq2', 'bc_age_x5_seq0', 'bc_age_x1_seq0'],
+                    53: ['bc_age_x25_seq2', 'bc_age_x5_seq0', 'bc_age_x1_seq3'],
+                    56: ['bc_age_x25_seq2', 'bc_age_x5_seq1', 'bc_age_x1_seq1'],
+                    58: ['bc_age_x25_seq2', 'bc_age_x5_seq1', 'bc_age_x1_seq3'],
+                    60: ['bc_age_x25_seq2', 'bc_age_x5_seq2', 'bc_age_x1_seq0'],
+                    63: ['bc_age_x25_seq2', 'bc_age_x5_seq2', 'bc_age_x1_seq3'],
+                    64: ['bc_age_x25_seq2', 'bc_age_x5_seq2', 'bc_age_x1_seq4'],
+                    65: ['bc_age_x25_seq2', 'bc_age_x5_seq3', 'bc_age_x1_seq0'],
+                    66: ['bc_age_x25_seq2', 'bc_age_x5_seq3', 'bc_age_x1_seq1'],
+                    67: ['bc_age_x25_seq2', 'bc_age_x5_seq3', 'bc_age_x1_seq2'],
+                    69: ['bc_age_x25_seq2', 'bc_age_x5_seq3', 'bc_age_x1_seq4'],
+                    70: ['bc_age_x25_seq2', 'bc_age_x5_seq4', 'bc_age_x1_seq0'],
+                    72: ['bc_age_x25_seq2', 'bc_age_x5_seq4', 'bc_age_x1_seq2'],
+                    75: ['bc_age_x25_seq3', 'bc_age_x5_seq0', 'bc_age_x1_seq0'],
+                    76: ['bc_age_x25_seq3', 'bc_age_x5_seq0', 'bc_age_x1_seq1'],
+                    78: ['bc_age_x25_seq3', 'bc_age_x5_seq0', 'bc_age_x1_seq3'],
+                    80: ['bc_age_x25_seq3', 'bc_age_x5_seq1', 'bc_age_x1_seq0'],
+                    82: ['bc_age_x25_seq3', 'bc_age_x5_seq1', 'bc_age_x1_seq2'],
+                    84: ['bc_age_x25_seq3', 'bc_age_x5_seq1', 'bc_age_x1_seq4'],
+                    85: ['bc_age_x25_seq3', 'bc_age_x5_seq2', 'bc_age_x1_seq0'],
+                    87: ['bc_age_x25_seq3', 'bc_age_x5_seq2', 'bc_age_x1_seq2'],
+                    90: ['bc_age_x25_seq3', 'bc_age_x5_seq3', 'bc_age_x1_seq0'],
+                    91: ['bc_age_x25_seq3', 'bc_age_x5_seq3', 'bc_age_x1_seq1'],
+                    92: ['bc_age_x25_seq3', 'bc_age_x5_seq3', 'bc_age_x1_seq2'],
+                    93: ['bc_age_x25_seq3', 'bc_age_x5_seq3', 'bc_age_x1_seq3'],
+                    94: ['bc_age_x25_seq3', 'bc_age_x5_seq3', 'bc_age_x1_seq4'],
+                    95: ['bc_age_x25_seq3', 'bc_age_x5_seq4', 'bc_age_x1_seq0'],
+                    97: ['bc_age_x25_seq3', 'bc_age_x5_seq4', 'bc_age_x1_seq2'],
+                    98: ['bc_age_x25_seq3', 'bc_age_x5_seq4', 'bc_age_x1_seq3'],
+                    99: ['bc_age_x25_seq3', 'bc_age_x5_seq4', 'bc_age_x1_seq4']
+                }
+            },
+            bc_vax: {
+                label: 'Vaccinated',
+                type: 'boolean',
+                values: {
+                    'N': [],
+                    'Y': ['bc_vax_seq0']
+                }
+            },
+            bc_symptomatic: {
+                label: 'Symptomatic',
+                type: 'boolean',
+                values: {
+                    'N': [],
+                    'Y': ['bc_symptomatic_seq0']
+                }
+            },
+            bc_city: {
+                label: 'City',
+                type: 'categorical',
+                values: {
+                    'Amsterdam': ['bc_city_seq2', 'bc_city_seq1', 'bc_city_seq0'],
+                    'Atlanta': ['bc_city_seq3', 'bc_city_seq1', 'bc_city_seq0'],
+                    'Austin': ['bc_city_seq3', 'bc_city_seq2', 'bc_city_seq0'],
+                    'Baltimore': ['bc_city_seq3', 'bc_city_seq2', 'bc_city_seq1'],
+                    'Cancun': ['bc_city_seq4', 'bc_city_seq1', 'bc_city_seq0'],
+                    'Charleston': ['bc_city_seq4', 'bc_city_seq2', 'bc_city_seq0'],
+                    'Charlotte': ['bc_city_seq4', 'bc_city_seq2', 'bc_city_seq1'],
+                    'Chicago': ['bc_city_seq4', 'bc_city_seq3', 'bc_city_seq0'],
+                    'Dallas': ['bc_city_seq4', 'bc_city_seq3', 'bc_city_seq1'],
+                    'Denver': ['bc_city_seq4', 'bc_city_seq3', 'bc_city_seq2'],
+                    'Oranjestad': ['bc_city_seq5', 'bc_city_seq1', 'bc_city_seq0']
+                }
+            },
+            bc_flight_num: {
+                label: 'Flight number',
+                type: 'categorical',
+                values: {
+                    '385': ['bc_flight_num_seq2', 'bc_flight_num_seq1', 'bc_flight_num_seq0'],
+                    '389': ['bc_flight_num_seq3', 'bc_flight_num_seq1', 'bc_flight_num_seq0'],
+                    '617': ['bc_flight_num_seq3', 'bc_flight_num_seq2', 'bc_flight_num_seq0'],
+                    '674': ['bc_flight_num_seq3', 'bc_flight_num_seq2', 'bc_flight_num_seq1'],
+                    '772': ['bc_flight_num_seq4', 'bc_flight_num_seq1', 'bc_flight_num_seq0'],
+                    '1138': ['bc_flight_num_seq4', 'bc_flight_num_seq2', 'bc_flight_num_seq0'],
+                    '1163': ['bc_flight_num_seq4', 'bc_flight_num_seq2', 'bc_flight_num_seq1'],
+                    '1293': ['bc_flight_num_seq4', 'bc_flight_num_seq3', 'bc_flight_num_seq0'],
+                    '2124': ['bc_flight_num_seq4', 'bc_flight_num_seq3', 'bc_flight_num_seq1'],
+                    '2252': ['bc_flight_num_seq4', 'bc_flight_num_seq3', 'bc_flight_num_seq2'],
+                    '2276': ['bc_flight_num_seq5', 'bc_flight_num_seq1', 'bc_flight_num_seq0'],
+                    '3576': ['bc_flight_num_seq5', 'bc_flight_num_seq2', 'bc_flight_num_seq0'],
+                    '4676': ['bc_flight_num_seq5', 'bc_flight_num_seq2', 'bc_flight_num_seq1'],
+                    '4798': ['bc_flight_num_seq5', 'bc_flight_num_seq3', 'bc_flight_num_seq0'],
+                    '5655': ['bc_flight_num_seq5', 'bc_flight_num_seq3', 'bc_flight_num_seq1']
+                }
+            },
+            bc_flight_year: {
+                label: 'Flight year',
+                type: 'numeric',
+                digitBarcodes: {
+                    x10: ['bc_flight_year_x10_seq0', 'bc_flight_year_x10_seq1', 'bc_flight_year_x10_seq2'],
+                    x1: ['bc_flight_year_x1_seq0', 'bc_flight_year_x1_seq1']
+                },
+                values: {
+                    '20': ['bc_flight_year_x10_seq2', 'bc_flight_year_x1_seq0'],
+                    '21': ['bc_flight_year_x10_seq2', 'bc_flight_year_x1_seq1']
+                }
+            },
+            bc_flight_month: {
+                label: 'Flight month',
+                type: 'numeric',
+                digitBarcodes: {
+                    x3: ['bc_flight_month_x3_seq0', 'bc_flight_month_x3_seq1', 'bc_flight_month_x3_seq2', 'bc_flight_month_x3_seq3'],
+                    x1: ['bc_flight_month_x1_seq0', 'bc_flight_month_x1_seq1', 'bc_flight_month_x1_seq2']
+                },
+                values: {
+                    '0': ['bc_flight_month_x3_seq0', 'bc_flight_month_x1_seq0'],
+                    '1': ['bc_flight_month_x3_seq0', 'bc_flight_month_x1_seq1'],
+                    '2': ['bc_flight_month_x3_seq0', 'bc_flight_month_x1_seq2'],
+                    '3': ['bc_flight_month_x3_seq1', 'bc_flight_month_x1_seq0'],
+                    '4': ['bc_flight_month_x3_seq1', 'bc_flight_month_x1_seq1'],
+                    '5': ['bc_flight_month_x3_seq1', 'bc_flight_month_x1_seq2'],
+                    '6': ['bc_flight_month_x3_seq2', 'bc_flight_month_x1_seq0'],
+                    '7': ['bc_flight_month_x3_seq2', 'bc_flight_month_x1_seq1'],
+                    '8': ['bc_flight_month_x3_seq2', 'bc_flight_month_x1_seq2'],
+                    '11': ['bc_flight_month_x3_seq3', 'bc_flight_month_x1_seq2']
+                }
+            }
+        };
+
+        // Month names
+        const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // Query state: array of OR groups, each containing conditions
+        // Structure: [{ conditions: [{field, operator, value, negate}] }]
+        let queryGroups = [];
+        let conditionIdCounter = 0;
+        let groupIdCounter = 0;
+
+        // Get available operators for a field
+        function getOperators(fieldId) {
+            const field = ENCODING[fieldId];
+            if (field.type === 'boolean') {
+                return [
+                    { value: 'eq', label: 'is' },
+                    { value: 'neq', label: 'is not' }
+                ];
+            } else if (field.type === 'numeric') {
+                return [
+                    { value: 'eq', label: '=' },
+                    { value: 'neq', label: '≠' },
+                    { value: 'range', label: 'in range' }
+                ];
+            } else {
+                return [
+                    { value: 'eq', label: '=' },
+                    { value: 'neq', label: '≠' }
+                ];
+            }
+        }
+
+        // Get value options for a field
+        function getValueOptions(fieldId) {
+            const field = ENCODING[fieldId];
+            const values = Object.keys(field.values);
+
+            if (field.type === 'boolean') {
+                return [
+                    { value: 'Y', label: 'Yes' },
+                    { value: 'N', label: 'No' }
+                ];
+            } else if (fieldId === 'bc_flight_month') {
+                return values.map(v => ({ value: v, label: MONTH_NAMES[parseInt(v)] }));
+            } else if (fieldId === 'bc_flight_year') {
+                return values.map(v => ({ value: v, label: '20' + v }));
+            } else if (fieldId === 'bc_age') {
+                return values.sort((a, b) => parseInt(a) - parseInt(b)).map(v => ({ value: v, label: v }));
+            } else {
+                return values.sort().map(v => ({ value: v, label: v }));
+            }
+        }
+
+        // Add OR group
+        function addOrGroup() {
+            queryGroups.push({
+                id: groupIdCounter++,
+                conditions: []
+            });
+            renderQueryBuilder();
+        }
+
+        // Remove OR group
+        function removeOrGroup(groupId) {
+            queryGroups = queryGroups.filter(g => g.id !== groupId);
+            renderQueryBuilder();
+            updateQueryPreview();
+        }
+
+        // Add condition to a group
+        function addCondition(groupId) {
+            const group = queryGroups.find(g => g.id === groupId);
+            if (group) {
+                group.conditions.push({
+                    id: conditionIdCounter++,
+                    field: 'bc_symptomatic',
+                    operator: 'eq',
+                    value: 'Y',
+                    value2: ''
+                });
+                renderQueryBuilder();
+                updateQueryPreview();
+            }
+        }
+
+        // Remove condition
+        function removeCondition(groupId, conditionId) {
+            const group = queryGroups.find(g => g.id === groupId);
+            if (group) {
+                group.conditions = group.conditions.filter(c => c.id !== conditionId);
+                if (group.conditions.length === 0) {
+                    removeOrGroup(groupId);
+                } else {
+                    renderQueryBuilder();
+                    updateQueryPreview();
+                }
+            }
+        }
+
+        // Update condition
+        function updateCondition(groupId, conditionId, field, value) {
+            const group = queryGroups.find(g => g.id === groupId);
+            if (group) {
+                const condition = group.conditions.find(c => c.id === conditionId);
+                if (condition) {
+                    condition[field] = value;
+                    if (field === 'field') {
+                        // Reset operator and value when field changes
+                        const ops = getOperators(value);
+                        condition.operator = ops[0].value;
+                        const vals = getValueOptions(value);
+                        condition.value = vals[0].value;
+                        condition.value2 = '';
+                    }
+                    if (field === 'operator') {
+                        if (value === 'range' && !condition.value2) {
+                            // Initialize value2 to same as value when switching to range
+                            condition.value2 = condition.value;
+                        } else if (value !== 'range') {
+                            condition.value2 = '';
+                        }
+                    }
+                    renderQueryBuilder();
+                    updateQueryPreview();
+                }
+            }
+        }
+
+        // Render query builder
+        function renderQueryBuilder() {
+            const container = document.getElementById('queryBuilder');
+
+            if (queryGroups.length === 0) {
+                container.innerHTML = '<div class="empty-state">Click "Add OR group" to start building your query.</div>';
+                return;
+            }
+
+            let html = '';
+            queryGroups.forEach((group, groupIdx) => {
+                const isOrGroup = group.conditions.length > 1;
+                html += `
+                    <div class="condition-group ${isOrGroup ? 'or-group' : ''}">
+                        <div class="condition-group-header">
+                            <span class="logic-label">${isOrGroup ? 'OR group' : 'Condition'}</span>
+                            <button class="small danger" onclick="removeOrGroup(${group.id})">Remove</button>
+                        </div>
+                `;
+
+                group.conditions.forEach((cond, condIdx) => {
+                    const operators = getOperators(cond.field);
+                    const values = getValueOptions(cond.field);
+                    const showRange = cond.operator === 'range';
+
+                    html += `
+                        <div class="condition-row">
+                            ${condIdx > 0 ? '<span class="logic-connector">OR</span>' : '<span class="logic-connector"></span>'}
+                            <select onchange="updateCondition(${group.id}, ${cond.id}, 'field', this.value)">
+                                ${Object.entries(ENCODING).map(([id, f]) =>
+                                    `<option value="${escapeHtml(id)}" ${cond.field === id ? 'selected' : ''}>${escapeHtml(f.label)}</option>`
+                                ).join('')}
+                            </select>
+                            <select onchange="updateCondition(${group.id}, ${cond.id}, 'operator', this.value)">
+                                ${operators.map(op =>
+                                    `<option value="${escapeHtml(op.value)}" ${cond.operator === op.value ? 'selected' : ''}>${escapeHtml(op.label)}</option>`
+                                ).join('')}
+                            </select>
+                            <select onchange="updateCondition(${group.id}, ${cond.id}, 'value', this.value)">
+                                ${values.map(v =>
+                                    `<option value="${escapeHtml(String(v.value))}" ${cond.value === v.value ? 'selected' : ''}>${escapeHtml(String(v.label))}</option>`
+                                ).join('')}
+                            </select>
+                            ${showRange ? `
+                                <span style="color: #666;">to</span>
+                                <select onchange="updateCondition(${group.id}, ${cond.id}, 'value2', this.value)">
+                                    ${values.map(v =>
+                                        `<option value="${escapeHtml(String(v.value))}" ${cond.value2 === v.value ? 'selected' : ''}>${escapeHtml(String(v.label))}</option>`
+                                    ).join('')}
+                                </select>
+                            ` : ''}
+                            <button class="small danger" onclick="removeCondition(${group.id}, ${cond.id})">×</button>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        <button class="small" onclick="addCondition(${group.id})" style="margin-top: 5px;">+ Add OR condition</button>
+                    </div>
+                `;
+
+                if (groupIdx < queryGroups.length - 1) {
+                    html += '<div style="text-align: center; padding: 5px 0; font-weight: 600; color: #1565c0;">AND</div>';
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Update query preview
+        function updateQueryPreview() {
+            const container = document.getElementById('queryPreview');
+
+            if (queryGroups.length === 0 || queryGroups.every(g => g.conditions.length === 0)) {
+                container.innerHTML = '<span class="keyword">SELECT</span> samples <span class="keyword">WHERE</span> ...';
+                return;
+            }
+
+            // Helper to format values for display
+            function formatValue(fieldId, val) {
+                if (!val && val !== 0) return '?';
+                const field = ENCODING[fieldId];
+                if (fieldId === 'bc_flight_month') {
+                    const monthIdx = parseInt(val);
+                    return isNaN(monthIdx) ? val : (MONTH_NAMES[monthIdx] || `Month ${val}`);
+                } else if (fieldId === 'bc_flight_year') {
+                    return '20' + val;
+                } else if (field && field.type === 'boolean') {
+                    return val === 'Y' ? 'true' : 'false';
+                }
+                return val;
+            }
+
+            let queryParts = [];
+            queryGroups.forEach(group => {
+                if (group.conditions.length === 0) return;
+
+                let groupParts = group.conditions.map(cond => {
+                    const field = ENCODING[cond.field];
+                    if (!field) return '<span class="value">[unknown field]</span>';
+
+                    let value = formatValue(cond.field, cond.value);
+                    let op = cond.operator === 'eq' ? '=' : (cond.operator === 'neq' ? '≠' : '');
+
+                    if (cond.operator === 'range') {
+                        let value2 = formatValue(cond.field, cond.value2 || cond.value);
+                        return `<span class="field">${escapeHtml(field.label)}</span> <span class="operator">BETWEEN</span> <span class="value">${escapeHtml(value)}</span> <span class="keyword">AND</span> <span class="value">${escapeHtml(value2)}</span>`;
+                    }
+
+                    return `<span class="field">${escapeHtml(field.label)}</span> <span class="operator">${op}</span> <span class="value">${escapeHtml(value)}</span>`;
+                });
+
+                if (groupParts.length > 1) {
+                    queryParts.push('(' + groupParts.join(' <span class="keyword">OR</span> ') + ')');
+                } else {
+                    queryParts.push(groupParts[0]);
+                }
+            });
+
+            container.innerHTML = '<span class="keyword">SELECT</span> samples <span class="keyword">WHERE</span>\n  ' +
+                queryParts.join('\n  <span class="keyword">AND</span> ');
+        }
+
+        // Find shared barcodes for a range of values
+        function findSharedBarcodesForRange(fieldId, values) {
+            const field = ENCODING[fieldId];
+            if (!field.digitBarcodes) {
+                // For non-digit encoded fields, need all barcodes for each value
+                return null;
+            }
+
+            // Get all barcodes for these values
+            const allBarcodes = values.map(v => field.values[v] || []);
+            if (allBarcodes.some(b => b.length === 0)) return null;
+
+            // Find barcodes that appear in ALL values (shared)
+            const shared = allBarcodes[0].filter(b =>
+                allBarcodes.every(barcodes => barcodes.includes(b))
+            );
+
+            if (shared.length > 0) {
+                return {
+                    sharedBarcodes: shared,
+                    fullBarcodes: [...new Set(allBarcodes.flat())],
+                    optimized: shared.length < allBarcodes.flat().length
+                };
+            }
+
+            return null;
+        }
+
+        // HTML escape helper to prevent XSS
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Get values in a range
+        function getValuesInRange(fieldId, start, end) {
+            const field = ENCODING[fieldId];
+            const allValues = Object.keys(field.values);
+
+            let startNum = parseInt(start);
+            let endNum = parseInt(end);
+
+            // Handle invalid/empty values
+            if (isNaN(startNum)) startNum = 0;
+            if (isNaN(endNum)) endNum = startNum;
+
+            // Swap if end < start
+            if (endNum < startNum) {
+                [startNum, endNum] = [endNum, startNum];
+            }
+
+            return allValues.filter(v => {
+                const num = parseInt(v);
+                return !isNaN(num) && num >= startNum && num <= endNum;
+            });
+        }
+
+        // Generate barcodes for a condition
+        function getBarcodesForCondition(condition) {
+            const field = ENCODING[condition.field];
+
+            if (condition.operator === 'range') {
+                const valuesInRange = getValuesInRange(condition.field, condition.value, condition.value2 || condition.value);
+                const rangeOpt = findSharedBarcodesForRange(condition.field, valuesInRange);
+
+                if (rangeOpt && rangeOpt.optimized) {
+                    return {
+                        barcodes: rangeOpt.sharedBarcodes,
+                        gating: 'positive',
+                        optimized: true,
+                        note: `Range ${condition.value}-${condition.value2} shares barcode(s): uses ${rangeOpt.sharedBarcodes.length} instead of ${rangeOpt.fullBarcodes.length}`
+                    };
+                } else {
+                    // Cannot optimize - would need complex gating
+                    const allBarcodes = new Set();
+                    valuesInRange.forEach(v => {
+                        (field.values[v] || []).forEach(b => allBarcodes.add(b));
+                    });
+                    return {
+                        barcodes: [...allBarcodes],
+                        gating: 'complex',
+                        optimized: false,
+                        note: `Range query requires complex gating across ${valuesInRange.length} values`
+                    };
+                }
+            }
+
+            const barcodes = field.values[condition.value] || [];
+
+            if (condition.operator === 'neq') {
+                // NOT equals - negative gating
+                if (field.type === 'boolean' && condition.value === 'Y') {
+                    // NOT vaccinated = vax_seq0 negative
+                    return {
+                        barcodes: field.values['Y'],
+                        gating: 'negative',
+                        optimized: true,
+                        note: 'Negative gating (select barcode-negative population)'
+                    };
+                }
+                return {
+                    barcodes: barcodes,
+                    gating: 'negative',
+                    optimized: true
+                };
+            }
+
+            // Equals
+            if (field.type === 'boolean' && condition.value === 'N') {
+                // Not having the marker = no probe needed, just don't gate on it
+                return {
+                    barcodes: [],
+                    gating: 'none',
+                    optimized: true,
+                    note: 'No probe needed (absence of marker)'
+                };
+            }
+
+            return {
+                barcodes: barcodes,
+                gating: 'positive',
+                optimized: barcodes.length > 0
+            };
+        }
+
+        // Analyze a query group and determine required probes/gating
+        function analyzeQueryGroup(group) {
+            const conditionAnalysis = group.conditions.map(cond => ({
+                condition: cond,
+                ...getBarcodesForCondition(cond)
+            }));
+
+            // For OR groups, we need to think about how FACS gating works
+            // In an OR, we select cells that match ANY condition
+            // This typically requires positive gating on any of the probes
+
+            const isOrGroup = conditionAnalysis.length > 1;
+            const allBarcodes = new Set();
+            const gatingStrategies = [];
+
+            conditionAnalysis.forEach(ca => {
+                ca.barcodes.forEach(b => allBarcodes.add(b));
+                if (ca.barcodes.length > 0) {
+                    gatingStrategies.push({
+                        field: ENCODING[ca.condition.field].label,
+                        barcodes: ca.barcodes,
+                        gating: ca.gating,
+                        note: ca.note
+                    });
+                }
+            });
+
+            return {
+                conditions: conditionAnalysis,
+                barcodes: [...allBarcodes],
+                gatingStrategies,
+                isOrGroup,
+                channelsNeeded: allBarcodes.size
+            };
+        }
+
+        // Generate optimized sorting plan
+        function generateSortingPlan() {
+            const container = document.getElementById('sortingPlan');
+            const maxChannels = parseInt(document.getElementById('maxChannels').value);
+
+            if (queryGroups.length === 0 || queryGroups.every(g => g.conditions.length === 0)) {
+                container.innerHTML = '<div class="empty-state">Build a query first to generate a sorting plan.</div>';
+                return;
+            }
+
+            // Analyze each query group
+            const groupAnalysis = queryGroups.map(g => analyzeQueryGroup(g));
+
+            // Check if all conditions result in no probes needed
+            const totalBarcodes = new Set(groupAnalysis.flatMap(g => g.barcodes)).size;
+            if (totalBarcodes === 0) {
+                container.innerHTML = `
+                    <div class="info">
+                        <strong>No probes required.</strong><br>
+                        All conditions in this query specify absence of markers (e.g., "not vaccinated" when vaccinated=No means no barcode).
+                        This query would select all samples that don't have the specified barcodes, which may not be distinguishable without positive markers.
+                    </div>
+                `;
+                return;
+            }
+
+            // Plan rounds - try to fit as many compatible groups as possible per round
+            const rounds = [];
+            let remainingGroups = [...groupAnalysis];
+
+            while (remainingGroups.length > 0) {
+                let currentRound = {
+                    groups: [],
+                    barcodes: new Set(),
+                    gatingStrategies: []
+                };
+
+                // Greedy: add groups that fit
+                const stillRemaining = [];
+                for (const group of remainingGroups) {
+                    const newBarcodes = new Set([...currentRound.barcodes, ...group.barcodes]);
+                    if (newBarcodes.size <= maxChannels) {
+                        currentRound.groups.push(group);
+                        currentRound.barcodes = newBarcodes;
+                        currentRound.gatingStrategies.push(...group.gatingStrategies);
+                    } else {
+                        stillRemaining.push(group);
+                    }
+                }
+
+                if (currentRound.groups.length === 0 && stillRemaining.length > 0) {
+                    // A single group requires more channels than available - still add it but flag overflow
+                    const bigGroup = stillRemaining.shift();
+                    currentRound.groups.push(bigGroup);
+                    currentRound.barcodes = new Set(bigGroup.barcodes);
+                    currentRound.overflow = bigGroup.barcodes.length > maxChannels;
+                }
+
+                rounds.push(currentRound);
+                remainingGroups = stillRemaining;
+            }
+
+            // Render sorting plan
+            let html = '';
+
+            // Summary stats (totalBarcodes already calculated above)
+            html += `
+                <div class="summary-stats">
+                    <div class="stat">
+                        <div class="stat-value">${rounds.length}</div>
+                        <div class="stat-label">Rounds</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${totalBarcodes}</div>
+                        <div class="stat-label">Total probes</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${maxChannels}</div>
+                        <div class="stat-label">Channels/round</div>
+                    </div>
+                </div>
+            `;
+
+            // Helper to format values for sorting plan display
+            function formatPlanValue(fieldId, val) {
+                if (!val && val !== 0) return '?';
+                const field = ENCODING[fieldId];
+                if (fieldId === 'bc_flight_month') {
+                    const monthIdx = parseInt(val);
+                    return isNaN(monthIdx) ? val : (MONTH_NAMES[monthIdx] || `Month ${val}`);
+                } else if (fieldId === 'bc_flight_year') {
+                    return '20' + val;
+                } else if (field && field.type === 'boolean') {
+                    return val === 'Y' ? 'true' : 'false';
+                }
+                return val;
+            }
+
+            // Render each round
+            rounds.forEach((round, roundIdx) => {
+                const queryDescription = round.groups.map(g => {
+                    return g.conditions.map(ca => {
+                        const field = ENCODING[ca.condition.field];
+                        if (!field) return '[unknown]';
+
+                        let val = formatPlanValue(ca.condition.field, ca.condition.value);
+                        let op = ca.condition.operator === 'eq' ? '=' :
+                                 ca.condition.operator === 'neq' ? '≠' : 'in';
+
+                        if (ca.condition.operator === 'range') {
+                            let val2 = formatPlanValue(ca.condition.field, ca.condition.value2 || ca.condition.value);
+                            return `${escapeHtml(field.label)} ${op} [${escapeHtml(val)}, ${escapeHtml(val2)}]`;
+                        }
+                        return `${escapeHtml(field.label)} ${op} ${escapeHtml(val)}`;
+                    }).join(' OR ');
+                }).join(') AND (');
+
+                const isOverflow = round.overflow || round.barcodes.size > maxChannels;
+                html += `
+                    <div class="round-card" ${isOverflow ? 'style="border-color: #f44336;"' : ''}>
+                        <div class="round-header" ${isOverflow ? 'style="background: #f44336;"' : ''}>
+                            <span>Round ${roundIdx + 1}${isOverflow ? ' ⚠️' : ''}</span>
+                            <span class="round-channels">${round.barcodes.size}/${maxChannels} channels${isOverflow ? ' (OVERFLOW)' : ''}</span>
+                        </div>
+                        <div class="round-body">
+                            <div class="round-query">${round.groups.length > 1 ? '(' : ''}${queryDescription}${round.groups.length > 1 ? ')' : ''}</div>
+                            <div class="round-probes">
+                                ${round.gatingStrategies.map(gs =>
+                                    gs.barcodes.map(b => `
+                                        <div class="probe-chip ${gs.gating === 'negative' ? 'negative' : 'positive'}">
+                                            <span class="gate">${gs.gating === 'negative' ? '−' : '+'}</span>
+                                            ${escapeHtml(b)}
+                                        </div>
+                                    `).join('')
+                                ).join('')}
+                            </div>
+                            <div class="gating-strategy">
+                                <div class="gating-strategy-title">Gating strategy</div>
+                                ${round.gatingStrategies.map(gs => `
+                                    <div class="gate-row">
+                                        <strong>${escapeHtml(gs.field)}:</strong>
+                                        <span class="gate-logic">${gs.barcodes.map(b => (gs.gating === 'negative' ? '!' : '') + escapeHtml(b)).join(' AND ')}</span>
+                                        ${gs.note ? `<span style="color: #666; font-style: italic;">(${escapeHtml(gs.note)})</span>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Optimization notes
+            const hasRangeOptimization = groupAnalysis.some(g =>
+                g.conditions.some(c => c.optimized && c.note && c.note.includes('Range'))
+            );
+            const hasNegativeGating = groupAnalysis.some(g =>
+                g.gatingStrategies.some(gs => gs.gating === 'negative')
+            );
+
+            if (hasRangeOptimization || hasNegativeGating) {
+                html += '<div class="optimization-note"><strong>Optimizations applied:</strong><ul style="margin: 5px 0 0 20px; padding: 0;">';
+                if (hasRangeOptimization) {
+                    html += '<li>Range queries use shared digit barcodes to reduce probe count</li>';
+                }
+                if (hasNegativeGating) {
+                    html += '<li>Negative conditions use inverse gating (select barcode-negative population)</li>';
+                }
+                html += '</ul></div>';
+            }
+
+            // Check for any overflow rounds
+            const hasOverflow = rounds.some(r => r.overflow || r.barcodes.size > maxChannels);
+
+            if (hasOverflow) {
+                html += `<div class="warning"><strong>⚠️ Channel overflow detected.</strong> One or more rounds require more channels than available (${maxChannels}). Consider increasing channels per round or simplifying the query.</div>`;
+            } else if (rounds.length === 1) {
+                html += '<div class="success">✓ Query can be completed in a single FACS round!</div>';
+            } else {
+                html += `<div class="info">This query requires ${rounds.length} sequential FACS rounds. Each round progressively narrows down the sample pool.</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Reset query
+        function resetQuery() {
+            queryGroups = [];
+            renderQueryBuilder();
+            updateQueryPreview();
+            document.getElementById('sortingPlan').innerHTML = '<div class="empty-state">Build a query above and click "Generate sorting plan" to see the optimized multi-round sorting strategy.</div>';
+        }
+
+        // Load example query from paper
+        function loadExampleQuery() {
+            queryGroups = [
+                {
+                    id: groupIdCounter++,
+                    conditions: [
+                        { id: conditionIdCounter++, field: 'bc_symptomatic', operator: 'eq', value: 'Y', value2: '' },
+                        { id: conditionIdCounter++, field: 'bc_vax', operator: 'neq', value: 'Y', value2: '' }
+                    ]
+                },
+                {
+                    id: groupIdCounter++,
+                    conditions: [
+                        { id: conditionIdCounter++, field: 'bc_flight_month', operator: 'range', value: '6', value2: '8' }
+                    ]
+                },
+                {
+                    id: groupIdCounter++,
+                    conditions: [
+                        { id: conditionIdCounter++, field: 'bc_city', operator: 'eq', value: 'Chicago', value2: '' }
+                    ]
+                },
+                {
+                    id: groupIdCounter++,
+                    conditions: [
+                        { id: conditionIdCounter++, field: 'bc_flight_year', operator: 'eq', value: '20', value2: '' }
+                    ]
+                }
+            ];
+            renderQueryBuilder();
+            updateQueryPreview();
+        }
+
+        // Initialize
+        renderQueryBuilder();
+    </script>
+</body>
+</html>

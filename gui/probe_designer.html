@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Probe Designer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 540px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #666;
+            margin: 0 0 20px 0;
+        }
+        .section-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .section-header span {
+            font-weight: normal;
+            color: #666;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        label {
+            width: 140px;
+            font-size: 14px;
+            color: #333;
+        }
+        input, select {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0066cc;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e8e8e8;
+        }
+        button:active {
+            background: #ddd;
+        }
+        .file-upload {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .file-upload-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .file-upload label {
+            width: auto;
+            font-weight: 500;
+        }
+        .file-upload input[type="file"] {
+            flex: none;
+            padding: 4px;
+        }
+        .file-status {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+        }
+        .file-status.success {
+            color: #2e7d32;
+        }
+        .file-status.error {
+            color: #c62828;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            display: none;
+        }
+        .probe-preview {
+            background: #e8f4e8;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 13px;
+            display: none;
+        }
+        .probe-preview.active {
+            display: block;
+        }
+        .probe-preview-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2e7d32;
+        }
+        .probe-preview-seq {
+            font-family: monospace;
+            word-break: break-all;
+            background: #fff;
+            padding: 8px;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+        .probe-preview-seq span {
+            padding: 2px 0;
+        }
+        .seq-marker { color: #1565c0; }
+        .seq-splint { color: #7b1fa2; }
+        .seq-spacer { color: #999; }
+        .seq-barcode { color: #c62828; }
+        .probe-list {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: #fff;
+        }
+        .probe-list-empty {
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+        .probe-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        .probe-item:last-child {
+            border-bottom: none;
+        }
+        .probe-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .probe-item-id {
+            font-weight: 500;
+            color: #333;
+        }
+        .probe-item-seq {
+            font-family: monospace;
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .probe-item-remove {
+            margin-left: 10px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #c62828;
+            background: none;
+            border: 1px solid #c62828;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .probe-item-remove:hover {
+            background: #ffebee;
+        }
+        .bulk-select {
+            margin: 15px 0;
+            padding: 12px;
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 4px;
+            display: none;
+        }
+        .bulk-select.active {
+            display: block;
+        }
+        .bulk-select-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .bulk-select-title {
+            font-weight: 600;
+            color: #e65100;
+            font-size: 13px;
+        }
+        .bulk-select-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .bulk-select-actions button {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        .bulk-select-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: #fff;
+        }
+        .bulk-select-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            font-size: 13px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .bulk-select-item:last-child {
+            border-bottom: none;
+        }
+        .bulk-select-item:hover {
+            background: #f5f5f5;
+        }
+        .bulk-select-item input {
+            margin-right: 8px;
+            flex: none;
+            width: auto;
+        }
+        .bulk-select-item-id {
+            flex: 1;
+            font-weight: 500;
+        }
+        .bulk-select-item-seq {
+            font-family: monospace;
+            font-size: 11px;
+            color: #666;
+        }
+        .bulk-select-count {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+        .export-options {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        .export-options .form-row {
+            margin-bottom: 10px;
+        }
+        .export-options label {
+            width: 100px;
+            font-size: 13px;
+        }
+        .export-options input {
+            font-size: 13px;
+            padding: 6px 10px;
+        }
+        .search-hint {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+            margin-left: 140px;
+        }
+        .autocomplete-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        .autocomplete-wrapper input {
+            width: 100%;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            z-index: 100;
+            display: none;
+        }
+        .autocomplete-list.active {
+            display: block;
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background: #0066cc;
+            color: #fff;
+        }
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: none;
+        }
+        .status-message.show {
+            display: block;
+        }
+        .status-message.success {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+        }
+        .status-message.error {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        .app-controls {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .app-controls.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .sample-link {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .sample-link a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .sample-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Probe Designer</h1>
+    <p class="subtitle">Design fluorescent probes for sample retrieval from pooled capsules. See <a href="https://doi.org/10.1101/2024.04.12.24305660" target="_blank" rel="noopener">Berleant et al. (2025)</a> for details.</p>
+
+    <div class="file-upload">
+        <div class="file-upload-row">
+            <label for="barcodeFile">Barcode library:</label>
+            <input type="file" id="barcodeFile" accept=".csv,.tsv,.txt">
+        </div>
+        <div class="file-status" id="fileStatus">Upload a CSV/TSV file with "Barcode" and "Sequence" columns</div>
+        <div class="sample-link">
+            <a href="#" id="sampleDownload">Download sample TSV file</a> to see the required format.
+        </div>
+    </div>
+
+    <div class="status-message" id="statusMessage"></div>
+
+    <div id="appControls" class="app-controls">
+    <div class="section-header">Probe configuration</div>
+
+    <div class="form-row">
+        <label for="barcode">Target barcode</label>
+        <div class="autocomplete-wrapper">
+            <input type="text" id="barcode" autocomplete="off" placeholder="Search by ID or sequence...">
+            <div class="autocomplete-list" id="barcodeList"></div>
+        </div>
+    </div>
+    <div class="search-hint">Search matches barcode IDs and sequences. Select one or use bulk mode below.</div>
+
+    <div class="form-row" style="margin-top: 15px;">
+        <label></label>
+        <button type="button" onclick="toggleBulkMode()" id="bulkModeBtn">Bulk selection mode</button>
+    </div>
+
+    <div class="bulk-select" id="bulkSelect">
+        <div class="bulk-select-header">
+            <span class="bulk-select-title">Bulk select barcodes</span>
+            <div class="bulk-select-actions">
+                <button onclick="selectAllBulk()">Select all</button>
+                <button onclick="clearBulkSelection()">Clear</button>
+            </div>
+        </div>
+        <input type="text" id="bulkFilter" placeholder="Filter barcodes..." style="width: 100%; margin-bottom: 8px; padding: 6px 10px; font-size: 13px;">
+        <div class="bulk-select-list" id="bulkSelectList"></div>
+        <div class="bulk-select-count"><span id="bulkCount">0</span> barcodes selected</div>
+    </div>
+
+    <div class="form-row">
+        <label for="marker">Fluorophore</label>
+        <select id="marker">
+            <option value="">-- Select fluorophore --</option>
+            <option value="0">Atto 425 (AT425)</option>
+            <option value="1">Atto 488 (AT488)</option>
+            <option value="2">Atto 565 (AT565)</option>
+            <option value="3">Alexa Fluor 647 (AF647)</option>
+            <option value="4">Alexa Fluor 750 (AF750)</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="useAmplifier">Use amplifier</label>
+        <label style="width: auto; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="useAmplifier" style="flex: none; width: auto;">
+            <span style="font-size: 13px; color: #666;">3x repeat with splint (increases signal)</span>
+        </label>
+    </div>
+
+    <div class="probe-preview" id="probePreview">
+        <div class="probe-preview-title">Probe preview</div>
+        <div><strong>ID:</strong> <span id="previewId"></span></div>
+        <div class="probe-preview-seq" id="previewSeq"></div>
+        <div style="margin-top: 8px; font-size: 11px; color: #666;" id="previewLegend">
+            <span class="seq-marker">■</span> Marker &nbsp;
+            <span class="seq-spacer">■</span> Spacer &nbsp;
+            <span class="seq-barcode">■</span> Barcode (rev. comp.)
+        </div>
+    </div>
+
+    <div class="buttons">
+        <button onclick="addToList()" id="addProbeBtn">Add probe</button>
+        <button onclick="addBulkProbes()" id="addBulkBtn" style="display: none;">Add selected probes</button>
+        <button onclick="exportToFile()">Export for IDT</button>
+        <button onclick="clearOutput()">Clear all</button>
+    </div>
+
+    <div class="export-options">
+        <div class="form-row">
+            <label for="projectName">Project name</label>
+            <input type="text" id="projectName" placeholder="Optional - adds prefix to filename">
+        </div>
+    </div>
+
+    <div class="section-header">Probe order list <span id="probeCount">(0 probes)</span></div>
+    <div class="probe-list" id="probeList">
+        <div class="probe-list-empty">No probes added yet</div>
+    </div>
+    <textarea id="output" placeholder="Probes will appear here in IDT format..."></textarea>
+    </div><!-- end app-controls -->
+
+    <script>
+        // Marker data (v1.2)
+        const markerPrefix = ['at425_', 'at488_', 'at565_', 'af647_', 'af750_'];
+        const markerSeq = [
+            'GGACGCTGGGTCATA',
+            'AGACGAGGCCCTAGA',
+            'GCATTGCGTTCAACT',
+            'TATATGAGCTAGCCG',
+            'CATGCATCCAACGCG'
+        ];
+        const splintSeq = [
+            'GGCGTATATTGAGTT',
+            'CGTACACTTACACAT',
+            'GGCGTATATTGAGTT',
+            'CGGTTGCACCCTGTG',
+            'TGCCACGCTACAGGT'
+        ];
+        const VERSION_PREFIX = '';
+        const SCALE = '100nm';
+
+        // Sample TSV data for download
+        const sampleTsvData = `Barcode\tSequence
+bc_uid_seq0\tTATGAGGACGAATCTCCCGCTTATA
+bc_uid_seq1\tGAGTAGTGTCCTCACGCAATTGCCA
+bc_uid_seq2\tAGCGCCGTGGTTATCGGCGAGGGCA
+bc_uid_seq3\tTTGCCGTCGTCGGACCGGTTAACTT
+bc_uid_seq4\tCCAGCTTAAGCCGGAGATATGCTTC`;
+
+        // Barcode data (will be loaded from CSV or use embedded data)
+        let barcodeData = [];
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show auto-hiding status message
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('statusMessage');
+            msg.textContent = text;
+            msg.className = 'status-message show ' + type;
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        // Enable app controls after file is loaded
+        function enableAppControls() {
+            document.getElementById('appControls').classList.add('active');
+        }
+
+        // Download sample TSV file
+        function downloadSampleTsv() {
+            const blob = new Blob([sampleTsvData], { type: 'text/tab-separated-values' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sample_barcodes.tsv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Probe list (stores all added probes)
+        let probeList = [];
+
+        // Reverse complement function (truncated to 15bp)
+        function probeTrunct(seq) {
+            const complements = {
+                'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
+                'a': 't', 't': 'a', 'g': 'c', 'c': 'g',
+                '*': '*', 'N': 'N', 'n': 'n'
+            };
+            const reversed = seq.split('').reverse().join('');
+            const complement = reversed.split('').map(nt => complements[nt] || nt).join('').toUpperCase();
+            return complement.substring(0, 15);
+        }
+
+        // Reverse complement function (full sequence, not truncated)
+        function reverseComplement(seq) {
+            const complements = {
+                'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
+                'a': 't', 't': 'a', 'g': 'c', 'c': 'g',
+                '*': '*', 'N': 'N', 'n': 'n'
+            };
+            const reversed = seq.split('').reverse().join('');
+            return reversed.split('').map(nt => complements[nt] || nt).join('').toUpperCase();
+        }
+
+        // Build probe and amplifier sequences based on amplifier setting
+        // Returns { probe: string, amplifier: string|null }
+        function buildProbeSequences(markerIdx, barcodeSeq, useAmplifier) {
+            const marker = markerSeq[markerIdx];
+            const splint = splintSeq[markerIdx];
+            const splintRc = reverseComplement(splint);
+            const barcodePart = probeTrunct(barcodeSeq);
+
+            if (useAmplifier) {
+                // Amplifier mode: two oligos needed (dye is separate, not generated here)
+                // Preamplifier probe: (splint) x3 + barcode_rc - binds to barcode on cell, no TT spacers
+                const preamplifierSeq = splint.repeat(3) + barcodePart;
+                // Amplifier: splint_rc + (TT + marker) x3 - constant per dye, binds to preamplifier
+                const amplifierSeq = splintRc + ('TT' + marker).repeat(3);
+                return { probe: preamplifierSeq, amplifier: amplifierSeq };
+            } else {
+                // No amplifier: single oligo directly to barcode
+                // (marker + TT) x3 + barcode_rc
+                const probeSeq = (marker + 'TT').repeat(3) + barcodePart;
+                return { probe: probeSeq, amplifier: null };
+            }
+        }
+
+        // Build preview HTML with colored parts
+        function buildPreviewHtml(markerIdx, barcodeSeq, useAmplifier) {
+            const marker = markerSeq[markerIdx];
+            const splint = splintSeq[markerIdx];
+            const splintRc = reverseComplement(splint);
+            const barcodePart = probeTrunct(barcodeSeq);
+
+            if (useAmplifier) {
+                // Preamplifier: (splint) x3 + barcode_rc - no TT spacers
+                // Amplifier: splint_rc + (TT + marker) x3 - constant per dye
+                return `<div style="margin-bottom: 6px;"><strong style="font-size: 11px; color: #666;">Preamplifier probe:</strong><br>` +
+                       `<span class="seq-splint">${splint}</span>` +
+                       `<span class="seq-splint">${splint}</span>` +
+                       `<span class="seq-splint">${splint}</span>` +
+                       `<span class="seq-barcode">${barcodePart}</span></div>` +
+                       `<div><strong style="font-size: 11px; color: #666;">Amplifier:</strong><br>` +
+                       `<span class="seq-splint">${splintRc}</span>` +
+                       `<span class="seq-spacer">TT</span><span class="seq-marker">${marker}</span>` +
+                       `<span class="seq-spacer">TT</span><span class="seq-marker">${marker}</span>` +
+                       `<span class="seq-spacer">TT</span><span class="seq-marker">${marker}</span></div>`;
+            } else {
+                // No amplifier: direct probe to barcode
+                return `<span class="seq-marker">${marker}</span><span class="seq-spacer">TT</span>` +
+                       `<span class="seq-marker">${marker}</span><span class="seq-spacer">TT</span>` +
+                       `<span class="seq-marker">${marker}</span><span class="seq-spacer">TT</span>` +
+                       `<span class="seq-barcode">${barcodePart}</span>`;
+            }
+        }
+
+        // Update probe preview when barcode or marker changes
+        function updatePreview() {
+            const barcodeId = document.getElementById('barcode').value.trim();
+            const markerIdx = document.getElementById('marker').value;
+            const useAmplifier = document.getElementById('useAmplifier').checked;
+            const preview = document.getElementById('probePreview');
+
+            // Find barcode sequence
+            const barcode = barcodeData.find(b => b.id === barcodeId);
+
+            if (!barcode || !markerIdx) {
+                preview.classList.remove('active');
+                return;
+            }
+
+            const probeId = VERSION_PREFIX + markerPrefix[markerIdx] + barcodeId;
+
+            document.getElementById('previewId').textContent = probeId;
+            document.getElementById('previewSeq').innerHTML = buildPreviewHtml(markerIdx, barcode.seq, useAmplifier);
+
+            // Update legend based on mode
+            const legend = document.getElementById('previewLegend');
+            if (useAmplifier) {
+                legend.innerHTML = '<span class="seq-splint">■</span> Splint &nbsp;' +
+                                   '<span class="seq-marker">■</span> Marker &nbsp;' +
+                                   '<span class="seq-barcode">■</span> Barcode (rev. comp.)';
+            } else {
+                legend.innerHTML = '<span class="seq-marker">■</span> Marker &nbsp;' +
+                                   '<span class="seq-spacer">■</span> Spacer &nbsp;' +
+                                   '<span class="seq-barcode">■</span> Barcode (rev. comp.)';
+            }
+
+            preview.classList.add('active');
+        }
+
+        // Add to list callback
+        function addToList() {
+            const barcodeInput = document.getElementById('barcode');
+            const markerSelect = document.getElementById('marker');
+            const useAmplifier = document.getElementById('useAmplifier').checked;
+
+            const barcodeId = barcodeInput.value.trim();
+            const markerIdx = markerSelect.value;
+
+            if (!barcodeId && !markerIdx) {
+                showMessage('No barcode ID and fluorophore selected.', 'error');
+                return;
+            }
+            if (!markerIdx) {
+                showMessage('No fluorophore selected.', 'error');
+                return;
+            }
+            if (!barcodeId) {
+                showMessage('No barcode ID selected.', 'error');
+                return;
+            }
+
+            // Find barcode sequence
+            const barcode = barcodeData.find(b => b.id === barcodeId);
+            if (!barcode) {
+                showMessage('Barcode ID not found in list.', 'error');
+                return;
+            }
+
+            const sequences = buildProbeSequences(markerIdx, barcode.seq, useAmplifier);
+
+            if (useAmplifier) {
+                // Amplifier mode naming: preamplifier_probe and amplifier
+                const preamplifierId = VERSION_PREFIX + markerPrefix[markerIdx] + barcodeId + '_branch2';
+                const amplifierId = VERSION_PREFIX + markerPrefix[markerIdx] + 'branch2';
+
+                // Check for duplicates
+                if (probeList.some(p => p.id === preamplifierId)) {
+                    showMessage(`Preamplifier probe "${preamplifierId}" is already in the list.`, 'error');
+                    return;
+                }
+
+                // Add preamplifier probe
+                probeList.push({
+                    id: preamplifierId,
+                    seq: sequences.probe,
+                    barcodeId: barcodeId,
+                    markerIdx: markerIdx,
+                    type: 'preamplifier'
+                });
+
+                // Add amplifier (only once per marker, check if already exists)
+                if (!probeList.some(p => p.id === amplifierId)) {
+                    probeList.push({
+                        id: amplifierId,
+                        seq: sequences.amplifier,
+                        barcodeId: barcodeId,
+                        markerIdx: markerIdx,
+                        type: 'amplifier'
+                    });
+                }
+            } else {
+                // Standard probe naming
+                const probeId = VERSION_PREFIX + markerPrefix[markerIdx] + barcodeId;
+
+                // Check for duplicates
+                if (probeList.some(p => p.id === probeId)) {
+                    showMessage(`Probe "${probeId}" is already in the list.`, 'error');
+                    return;
+                }
+
+                // Add probe to list
+                probeList.push({
+                    id: probeId,
+                    seq: sequences.probe,
+                    barcodeId: barcodeId,
+                    markerIdx: markerIdx,
+                    type: 'probe'
+                });
+            }
+
+            // Clear barcode input but keep fluorophore selected
+            barcodeInput.value = '';
+            document.getElementById('probePreview').classList.remove('active');
+
+            renderProbeList();
+        }
+
+        // Remove a probe from the list
+        function removeProbe(index) {
+            const item = probeList[index];
+
+            if (item.type === 'preamplifier') {
+                // Remove just the preamplifier probe
+                // Check if this was the last preamplifier for this marker - if so, remove the amplifier too
+                const markerIdx = item.markerIdx;
+                probeList.splice(index, 1);
+
+                // Check if any other preamplifiers use this marker
+                const otherPreamplifiers = probeList.filter(p =>
+                    p.type === 'preamplifier' && p.markerIdx === markerIdx
+                );
+                if (otherPreamplifiers.length === 0) {
+                    // Remove the amplifier for this marker
+                    const ampIdx = probeList.findIndex(p =>
+                        p.type === 'amplifier' && p.markerIdx === markerIdx
+                    );
+                    if (ampIdx >= 0) {
+                        probeList.splice(ampIdx, 1);
+                    }
+                }
+            } else if (item.type === 'amplifier') {
+                // Don't allow direct removal of amplifier if preamplifiers exist
+                const preamplifiers = probeList.filter(p =>
+                    p.type === 'preamplifier' && p.markerIdx === item.markerIdx
+                );
+                if (preamplifiers.length > 0) {
+                    showMessage('Remove all preamplifier probes first to remove the amplifier.', 'error');
+                    return;
+                }
+                probeList.splice(index, 1);
+            } else {
+                // Standard probe - just remove it
+                probeList.splice(index, 1);
+            }
+            renderProbeList();
+        }
+
+        // Render the probe list UI
+        function renderProbeList() {
+            const listEl = document.getElementById('probeList');
+            const output = document.getElementById('output');
+
+            if (probeList.length === 0) {
+                listEl.innerHTML = '<div class="probe-list-empty">No probes added yet</div>';
+                output.value = '';
+            } else {
+                listEl.innerHTML = probeList.map((p, i) => {
+                    let typeLabel = '';
+                    if (p.type === 'amplifier') {
+                        typeLabel = ' <span style="color: #7b1fa2; font-size: 11px;">(amplifier)</span>';
+                    } else if (p.type === 'preamplifier') {
+                        typeLabel = ' <span style="color: #e65100; font-size: 11px;">(preamplifier)</span>';
+                    }
+                    return `
+                    <div class="probe-item">
+                        <div class="probe-item-info">
+                            <div class="probe-item-id">${escapeHtml(p.id)}${typeLabel}</div>
+                            <div class="probe-item-seq">${escapeHtml(p.seq)}</div>
+                        </div>
+                        <button class="probe-item-remove" onclick="removeProbe(${i})">Remove</button>
+                    </div>
+                `;
+                }).join('');
+
+                // Update hidden textarea for export
+                output.value = probeList.map(p => `${p.id}\t${p.seq}\t${SCALE}`).join('\n') + '\n';
+            }
+
+            updateProbeCount();
+        }
+
+        // Update probe count display
+        function updateProbeCount() {
+            const count = probeList.length;
+            document.getElementById('probeCount').textContent = `(${count} probe${count !== 1 ? 's' : ''})`;
+        }
+
+        // Export to file
+        function exportToFile() {
+            if (probeList.length === 0) {
+                showMessage('No probes added to export.', 'error');
+                return;
+            }
+
+            const today = new Date();
+            const d = today.toISOString().split('T')[0].replace(/-/g, '_');
+            const projectName = document.getElementById('projectName').value.trim();
+            const prefix = projectName ? projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '_' : '';
+            const filename = prefix + d + '_IDT_export.csv';
+
+            const output = probeList.map(p => `${p.id}\t${p.seq}\t${SCALE}`).join('\n') + '\n';
+            const blob = new Blob([output], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Clear all probes
+        function clearOutput() {
+            if (probeList.length > 0 && !confirm('Remove all probes from the list?')) {
+                return;
+            }
+            probeList = [];
+            renderProbeList();
+            document.getElementById('probePreview').classList.remove('active');
+        }
+
+        // Autocomplete functionality
+        let selectedIndex = -1;
+
+        function setupAutocomplete() {
+            const input = document.getElementById('barcode');
+            const list = document.getElementById('barcodeList');
+
+            function showSuggestions() {
+                const value = input.value.toLowerCase().trim();
+                let matches;
+
+                if (!value) {
+                    // Show first 20 items when empty
+                    matches = barcodeData.slice(0, 20);
+                } else {
+                    // Filter by barcode ID OR sequence
+                    matches = barcodeData.filter(b =>
+                        b.id.toLowerCase().includes(value) ||
+                        b.seq.toLowerCase().includes(value)
+                    ).slice(0, 20);
+                }
+
+                if (matches.length === 0) {
+                    list.classList.remove('active');
+                    return;
+                }
+
+                selectedIndex = -1;
+                list.innerHTML = matches.map((b, i) =>
+                    `<div class="autocomplete-item" data-id="${escapeHtml(b.id)}" data-index="${i}">${escapeHtml(b.id)} - ${escapeHtml(b.seq)}</div>`
+                ).join('');
+                list.classList.add('active');
+            }
+
+            function updateSelection() {
+                const items = list.querySelectorAll('.autocomplete-item');
+                items.forEach((item, i) => {
+                    item.classList.toggle('selected', i === selectedIndex);
+                });
+                // Scroll selected item into view
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+                }
+            }
+
+            function selectItem(id) {
+                input.value = id;
+                list.classList.remove('active');
+                selectedIndex = -1;
+                updatePreview();
+            }
+
+            input.addEventListener('input', showSuggestions);
+
+            input.addEventListener('focus', showSuggestions);
+
+            input.addEventListener('keydown', (e) => {
+                const items = list.querySelectorAll('.autocomplete-item');
+                if (!list.classList.contains('active') || items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelection();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, 0);
+                    updateSelection();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && items[selectedIndex]) {
+                        selectItem(items[selectedIndex].dataset.id);
+                    }
+                } else if (e.key === 'Escape') {
+                    list.classList.remove('active');
+                    selectedIndex = -1;
+                }
+            });
+
+            list.addEventListener('click', (e) => {
+                if (e.target.classList.contains('autocomplete-item')) {
+                    selectItem(e.target.dataset.id);
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.autocomplete-wrapper')) {
+                    list.classList.remove('active');
+                    selectedIndex = -1;
+                }
+            });
+        }
+
+        // Parse CSV/TSV content
+        function parseCSV(text) {
+            // Handle Windows line endings (CRLF) and normalize
+            const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+            if (lines.length < 2) {
+                throw new Error('File must have a header and at least one data row');
+            }
+
+            // Detect delimiter (tab or comma)
+            const header = lines[0];
+            const delimiter = header.includes('\t') ? '\t' : ',';
+
+            // Parse header to find Barcode and Sequence columns
+            const headers = header.split(delimiter).map(h => h.trim().toLowerCase());
+            const barcodeIdx = headers.findIndex(h => h === 'barcode');
+            const seqIdx = headers.findIndex(h => h === 'sequence');
+
+            if (barcodeIdx === -1 || seqIdx === -1) {
+                throw new Error('File must have "Barcode" and "Sequence" columns');
+            }
+
+            const data = [];
+            const seenIds = new Set();
+            let duplicateCount = 0;
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Skip empty lines
+                const parts = line.split(delimiter);
+                if (parts.length > Math.max(barcodeIdx, seqIdx)) {
+                    const id = parts[barcodeIdx].trim();
+                    const seq = parts[seqIdx].trim().toUpperCase(); // Normalize sequence to uppercase
+                    if (id && seq) {
+                        // Check for duplicate barcode IDs
+                        if (seenIds.has(id)) {
+                            duplicateCount++;
+                            console.warn(`Skipping duplicate barcode ID "${id}" at line ${i + 1}`);
+                            continue;
+                        }
+                        // Validate sequence contains only valid nucleotides
+                        if (!/^[ATGCN*]+$/i.test(seq)) {
+                            console.warn(`Skipping barcode "${id}" - invalid sequence characters`);
+                            continue;
+                        }
+                        // Validate sequence length (must be at least 15bp for reverse complement truncation)
+                        if (seq.length < 15) {
+                            console.warn(`Skipping barcode "${id}" - sequence too short (${seq.length}bp, minimum 15bp required)`);
+                            continue;
+                        }
+                        data.push({ id, seq });
+                        seenIds.add(id);
+                    }
+                }
+            }
+
+            if (duplicateCount > 0) {
+                console.warn(`Skipped ${duplicateCount} duplicate barcode ID(s)`);
+            }
+
+            if (data.length === 0) {
+                throw new Error('No valid barcode entries found');
+            }
+
+            return data;
+        }
+
+        // Update status display
+        function setStatus(message, type = '') {
+            const status = document.getElementById('fileStatus');
+            status.textContent = message;
+            status.className = 'file-status' + (type ? ' ' + type : '');
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    barcodeData = parseCSV(text);
+                    setStatus(`Loaded ${barcodeData.length} barcodes from ${file.name}`, 'success');
+                    document.getElementById('barcode').value = '';
+                    enableAppControls();
+                    showMessage(`Loaded ${barcodeData.length} barcodes successfully!`, 'success');
+                    console.log(`Loaded ${barcodeData.length} barcodes from uploaded file`);
+                } catch (err) {
+                    setStatus('Error: ' + err.message, 'error');
+                    showMessage('Failed to load file: ' + err.message, 'error');
+                    console.error('Failed to parse uploaded file:', err);
+                }
+            };
+            reader.onerror = function() {
+                setStatus('Error reading file', 'error');
+            };
+            reader.readAsText(file);
+        }
+
+        // Bulk selection state
+        let bulkMode = false;
+        let bulkSelected = new Set();
+
+        // Toggle bulk mode
+        function toggleBulkMode() {
+            bulkMode = !bulkMode;
+            const bulkSelect = document.getElementById('bulkSelect');
+            const bulkModeBtn = document.getElementById('bulkModeBtn');
+            const addProbeBtn = document.getElementById('addProbeBtn');
+            const addBulkBtn = document.getElementById('addBulkBtn');
+            const barcodeInput = document.getElementById('barcode');
+
+            if (bulkMode) {
+                bulkSelect.classList.add('active');
+                bulkModeBtn.textContent = 'Single selection mode';
+                addProbeBtn.style.display = 'none';
+                addBulkBtn.style.display = '';
+                barcodeInput.disabled = true;
+                barcodeInput.placeholder = 'Disabled in bulk mode';
+                document.getElementById('probePreview').classList.remove('active');
+                renderBulkList();
+            } else {
+                bulkSelect.classList.remove('active');
+                bulkModeBtn.textContent = 'Bulk selection mode';
+                addProbeBtn.style.display = '';
+                addBulkBtn.style.display = 'none';
+                barcodeInput.disabled = false;
+                barcodeInput.placeholder = 'Search by ID or sequence...';
+                bulkSelected.clear();
+                updateBulkCount();
+            }
+        }
+
+        // Render bulk selection list
+        function renderBulkList() {
+            const listEl = document.getElementById('bulkSelectList');
+            const filter = document.getElementById('bulkFilter').value.toLowerCase().trim();
+
+            let filtered = barcodeData;
+            if (filter) {
+                filtered = barcodeData.filter(b =>
+                    b.id.toLowerCase().includes(filter) ||
+                    b.seq.toLowerCase().includes(filter)
+                );
+            }
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<div style="padding: 10px; color: #999; text-align: center;">No matches found</div>';
+                return;
+            }
+
+            // Show all matches in bulk selection list
+            listEl.innerHTML = filtered.map(b => `
+                <label class="bulk-select-item">
+                    <input type="checkbox" data-barcode-id="${escapeHtml(b.id)}" ${bulkSelected.has(b.id) ? 'checked' : ''}>
+                    <span class="bulk-select-item-id">${escapeHtml(b.id)}</span>
+                    <span class="bulk-select-item-seq">${escapeHtml(b.seq)}</span>
+                </label>
+            `).join('');
+
+            // Attach event listeners using event delegation
+            listEl.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    toggleBulkItem(this.dataset.barcodeId);
+                });
+            });
+        }
+
+        // Toggle individual bulk item
+        function toggleBulkItem(id) {
+            if (bulkSelected.has(id)) {
+                bulkSelected.delete(id);
+            } else {
+                bulkSelected.add(id);
+            }
+            updateBulkCount();
+            updateBulkPreview();
+        }
+
+        // Update bulk preview showing selected barcodes (max 10)
+        function updateBulkPreview() {
+            const markerIdx = document.getElementById('marker').value;
+            const useAmplifier = document.getElementById('useAmplifier').checked;
+            const preview = document.getElementById('probePreview');
+
+            if (!markerIdx || bulkSelected.size === 0) {
+                preview.classList.remove('active');
+                return;
+            }
+
+            const selectedBarcodes = Array.from(bulkSelected)
+                .map(id => barcodeData.find(b => b.id === id))
+                .filter(Boolean);
+
+            const toShow = selectedBarcodes.slice(0, 10);
+            const remaining = selectedBarcodes.length - 10;
+
+            let previewHtml = toShow.map(barcode => {
+                const probeId = VERSION_PREFIX + markerPrefix[markerIdx] + barcode.id;
+                return `<div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ddd;">
+                    <strong style="font-size: 12px;">${escapeHtml(probeId)}</strong>
+                    <div style="margin-top: 4px;">${buildPreviewHtml(markerIdx, barcode.seq, useAmplifier)}</div>
+                </div>`;
+            }).join('');
+
+            if (remaining > 0) {
+                previewHtml += `<div style="font-size: 12px; color: #666; text-align: center;">...and ${remaining} more barcode${remaining > 1 ? 's' : ''}</div>`;
+            }
+
+            document.getElementById('previewId').textContent = `${selectedBarcodes.length} barcode${selectedBarcodes.length > 1 ? 's' : ''} selected`;
+            document.getElementById('previewSeq').innerHTML = previewHtml;
+
+            // Update legend based on mode
+            const legend = document.getElementById('previewLegend');
+            if (useAmplifier) {
+                legend.innerHTML = '<span class="seq-splint">■</span> Splint &nbsp;' +
+                                   '<span class="seq-marker">■</span> Marker &nbsp;' +
+                                   '<span class="seq-barcode">■</span> Barcode (rev. comp.)';
+            } else {
+                legend.innerHTML = '<span class="seq-marker">■</span> Marker &nbsp;' +
+                                   '<span class="seq-spacer">■</span> Spacer &nbsp;' +
+                                   '<span class="seq-barcode">■</span> Barcode (rev. comp.)';
+            }
+
+            preview.classList.add('active');
+        }
+
+        // Select all visible items in bulk mode
+        function selectAllBulk() {
+            const filter = document.getElementById('bulkFilter').value.toLowerCase().trim();
+            let filtered = barcodeData;
+            if (filter) {
+                filtered = barcodeData.filter(b =>
+                    b.id.toLowerCase().includes(filter) ||
+                    b.seq.toLowerCase().includes(filter)
+                );
+            }
+            filtered.forEach(b => bulkSelected.add(b.id));
+            renderBulkList();
+            updateBulkCount();
+            updateBulkPreview();
+        }
+
+        // Clear bulk selection
+        function clearBulkSelection() {
+            bulkSelected.clear();
+            renderBulkList();
+            updateBulkCount();
+            updateBulkPreview();
+        }
+
+        // Update bulk count display
+        function updateBulkCount() {
+            document.getElementById('bulkCount').textContent = bulkSelected.size;
+        }
+
+        // Add all selected bulk probes
+        function addBulkProbes() {
+            const markerIdx = document.getElementById('marker').value;
+            const useAmplifier = document.getElementById('useAmplifier').checked;
+
+            if (!markerIdx) {
+                showMessage('Please select a fluorophore first.', 'error');
+                return;
+            }
+
+            if (bulkSelected.size === 0) {
+                showMessage('No barcodes selected. Use checkboxes to select barcodes.', 'error');
+                return;
+            }
+
+            let added = 0;
+            let skipped = 0;
+
+            bulkSelected.forEach(barcodeId => {
+                const barcode = barcodeData.find(b => b.id === barcodeId);
+                if (!barcode) return;
+
+                const sequences = buildProbeSequences(markerIdx, barcode.seq, useAmplifier);
+
+                if (useAmplifier) {
+                    // Amplifier mode naming
+                    const preamplifierId = VERSION_PREFIX + markerPrefix[markerIdx] + barcodeId + '_branch2';
+                    const amplifierId = VERSION_PREFIX + markerPrefix[markerIdx] + 'branch2';
+
+                    // Skip duplicates
+                    if (probeList.some(p => p.id === preamplifierId)) {
+                        skipped++;
+                        return;
+                    }
+
+                    // Add preamplifier probe
+                    probeList.push({
+                        id: preamplifierId,
+                        seq: sequences.probe,
+                        barcodeId: barcodeId,
+                        markerIdx: markerIdx,
+                        type: 'preamplifier'
+                    });
+
+                    // Add amplifier (only once per marker)
+                    if (!probeList.some(p => p.id === amplifierId)) {
+                        probeList.push({
+                            id: amplifierId,
+                            seq: sequences.amplifier,
+                            barcodeId: barcodeId,
+                            markerIdx: markerIdx,
+                            type: 'amplifier'
+                        });
+                    }
+                } else {
+                    // Standard probe naming
+                    const probeId = VERSION_PREFIX + markerPrefix[markerIdx] + barcodeId;
+
+                    // Skip duplicates
+                    if (probeList.some(p => p.id === probeId)) {
+                        skipped++;
+                        return;
+                    }
+
+                    probeList.push({
+                        id: probeId,
+                        seq: sequences.probe,
+                        barcodeId: barcodeId,
+                        markerIdx: markerIdx,
+                        type: 'probe'
+                    });
+                }
+                added++;
+            });
+
+            // Clear selection after adding
+            bulkSelected.clear();
+            renderBulkList();
+            updateBulkCount();
+            renderProbeList();
+
+            if (skipped > 0) {
+                showMessage(`Added ${added} probe(s). Skipped ${skipped} duplicate(s).`, 'success');
+            } else if (added > 0) {
+                showMessage(`Added ${added} probe(s).`, 'success');
+            }
+        }
+
+        // Initialize
+        document.getElementById('barcodeFile').addEventListener('change', handleFileUpload);
+        document.getElementById('marker').addEventListener('change', function() {
+            if (bulkMode) {
+                updateBulkPreview();
+            } else {
+                updatePreview();
+            }
+        });
+        document.getElementById('useAmplifier').addEventListener('change', function() {
+            if (bulkMode) {
+                updateBulkPreview();
+            } else {
+                updatePreview();
+            }
+        });
+        document.getElementById('bulkFilter').addEventListener('input', renderBulkList);
+        document.getElementById('sampleDownload').addEventListener('click', function(e) {
+            e.preventDefault();
+            downloadSampleTsv();
+        });
+        setupAutocomplete();
+    </script>
+</body>
+</html>
