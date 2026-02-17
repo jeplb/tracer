@@ -2,7 +2,7 @@
 
 Web-based tools for designing fluorescent probes and planning FACS sorting queries for pooled biobank sample retrieval.
 
-**Reference:** [Berleant et al. (2025)]([https://doi.org/10.1101/2024.04.12.24305660](https://www.nature.com/articles/s41467-026-69402-3) - "Enabling global-scale nucleic acid repositories through versatile, scalable biochemical selection from room-temperature archives"
+**Reference:** [Berleant et al. (2025)]([https://doi.org/10.1101/2024.04.12.24305660](https://www.nature.com/articles/s41467-026-69402-3]) - "Enabling global-scale nucleic acid repositories through versatile, scalable biochemical selection from room-temperature archives"
 
 ---
 
